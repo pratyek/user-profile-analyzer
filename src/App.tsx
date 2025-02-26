@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X, Cpu, Users, FlaskConical, BookOpen, Building2, GraduationCap, Mail, ChevronDown } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 // Page Components
@@ -14,6 +14,8 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const dropdownRefs = useRef({});
   
   // Handle scroll to hide/show navbar
   useEffect(() => {
@@ -38,8 +40,30 @@ function App() {
     };
   }, [lastScrollY]);
 
+  // Click outside handler to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeDropdown !== null) {
+        const dropdownRef = dropdownRefs.current[activeDropdown];
+        if (dropdownRef && !dropdownRef.contains(event.target)) {
+          setActiveDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeDropdown]);
+
   const closeMenu = () => {
     setIsMenuOpen(false);
+    setActiveDropdown(null);
+  };
+
+  const toggleDropdown = (id) => {
+    setActiveDropdown(activeDropdown === id ? null : id);
   };
 
   // Navigation items with dropdown options
@@ -137,22 +161,42 @@ function App() {
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center">
                 {navItems.map((item) => (
-                  <div key={item.id} className="relative group">
+                  <div 
+                    key={item.id} 
+                    className="relative"
+                    ref={el => dropdownRefs.current[item.id] = el}
+                    onMouseEnter={() => setActiveDropdown(item.id)}
+                    onMouseLeave={() => {
+                      // Use setTimeout to allow users to move to the dropdown
+                      setTimeout(() => {
+                        // Only close if the mouse isn't over the dropdown
+                        if (!dropdownRefs.current[item.id]?.matches(':hover')) {
+                          setActiveDropdown(null);
+                        }
+                      }, 100);
+                    }}
+                  >
                     <Link 
                       to={item.path}
                       className="text-white hover:text-gray-200 px-3 py-2 mx-1 rounded-md text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                      onClick={() => setActiveDropdown(null)}
                     >
                       {item.icon}
                       {item.text}
-                      <ChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />
+                      <ChevronDown className={`h-4 w-4 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
                     </Link>
                     
-                    {/* Desktop Dropdown - Now shows on hover */}
-                    <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 hidden group-hover:block">
+                    {/* Desktop Dropdown with improved visibility control */}
+                    <div 
+                      className={`absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 transition-opacity duration-150 ${
+                        activeDropdown === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
+                      }`}
+                    >
                       <div className="py-1">
                         <Link 
                           to={item.path} 
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setActiveDropdown(null)}
                         >
                           All {item.text}
                         </Link>
@@ -161,6 +205,7 @@ function App() {
                             key={index} 
                             to={dropdownItem.path} 
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setActiveDropdown(null)}
                           >
                             {dropdownItem.text}
                           </Link>
@@ -188,21 +233,27 @@ function App() {
             <div className="md:hidden bg-black/80 backdrop-blur-sm">
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 {navItems.map((item) => (
-                  <div key={item.id} className="group">
-                    <Link
-                      to={item.path}
+                  <div key={item.id} className="block">
+                    <div
                       className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-base font-medium flex items-center justify-between cursor-pointer"
-                      onClick={closeMenu}
+                      onClick={() => toggleDropdown(item.id)}
                     >
                       <div className="flex items-center gap-2">
                         {item.icon}
                         {item.text}
                       </div>
-                      <ChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />
-                    </Link>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
+                    </div>
                     
-                    {/* Mobile Dropdown - Made to work with hover on mobile via groups */}
-                    <div className="pl-6 mt-1 space-y-1 hidden group-hover:block">
+                    {/* Mobile Dropdown - Now uses state for visibility */}
+                    <div className={`pl-6 mt-1 space-y-1 ${activeDropdown === item.id ? 'block' : 'hidden'}`}>
+                      <Link 
+                        to={item.path} 
+                        className="block px-3 py-2 rounded-md text-sm text-gray-300 hover:text-white"
+                        onClick={closeMenu}
+                      >
+                        All {item.text}
+                      </Link>
                       {item.dropdown.map((dropdownItem, index) => (
                         <Link 
                           key={index} 
