@@ -1,193 +1,305 @@
-// import React from 'react';
-import { ChevronRight, Brain, Cpu, Database, Microscope, Globe2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, X, Cpu, Users, FlaskConical, BookOpen, Building2, GraduationCap, Mail, ChevronDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const HomePage = () => {
+// Navigation items with dropdown options
+const navItems = [
+  {
+    id: 'member',
+    text: 'MEMBER',
+    icon: <Users className="h-4 w-4" />,
+    path: '/members',
+    dropdown: [
+      { text: 'Faculty', path: '/members/faculty' },
+      { text: 'Researchers', path: '/members/researchers' },
+      { text: 'Graduate Students', path: '/members/graduate-students' },
+      { text: 'Alumni', path: '/members/alumni' }
+    ]
+  },
+  {
+    id: 'research',
+    text: 'RESEARCH',
+    icon: <FlaskConical className="h-4 w-4" />,
+    path: '/research',
+    dropdown: [
+      { text: 'Neuromorphic Computing', path: '/research/neuromorphic-computing' },
+      { text: 'Nano-electronics', path: '/research/nano-electronics' },
+      { text: 'Future Logic Devices', path: '/research/future-logic-devices' },
+      { text: 'Memory Technologies', path: '/research/memory-technologies' }
+    ]
+  },
+  {
+    id: 'publication',
+    text: 'PUBLICATION',
+    icon: <BookOpen className="h-4 w-4" />,
+    path: '/publications',
+    dropdown: [
+      { text: 'Journal Papers', path: '/publications/journal-papers' },
+      { text: 'Conference Papers', path: '/publications/conference-papers' },
+      { text: 'Patents', path: '/publications/patents' },
+      { text: 'Books & Book Chapters', path: '/publications/books' }
+    ]
+  },
+  {
+    id: 'facility',
+    text: 'FACILITY',
+    icon: <Building2 className="h-4 w-4" />,
+    path: '/facility',
+    dropdown: [
+      { text: 'Lab Equipment', path: '/facility/lab-equipment' },
+      { text: 'Cleanroom', path: '/facility/cleanroom' },
+      { text: 'Computation Resources', path: '/facility/computation-resources' },
+      { text: 'Virtual Tour', path: '/facility/virtual-tour' }
+    ]
+  },
+  {
+    id: 'lecture',
+    text: 'LECTURE',
+    icon: <GraduationCap className="h-4 w-4" />,
+    path: '/lecture',
+    dropdown: [
+      { text: 'Undergraduate Courses', path: '/lecture/undergraduate' },
+      { text: 'Graduate Courses', path: '/lecture/graduate' },
+      { text: 'Workshops', path: '/lecture/workshops' },
+      { text: 'Tutorial Videos', path: '/lecture/tutorials' }
+    ]
+  },
+  {
+    id: 'contact',
+    text: 'CONTACT',
+    icon: <Mail className="h-4 w-4" />,
+    path: '/contact',
+    dropdown: [
+      { text: 'Location', path: '/contact/location' },
+      { text: 'Email', path: '/contact/email' },
+      { text: 'Join Us', path: '/contact/join-us' },
+      { text: 'Collaboration Inquiries', path: '/contact/collaboration' }
+    ]
+  }
+];
+
+const Navbar: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Handle scroll to hide/show navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY) {
+        // Scrolling down
+        setNavVisible(false);
+      } else {
+        // Scrolling up
+        setNavVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
+
+  // Modified hover handlers for better dropdown behavior
+  const handleDropdownEnter = (id: string) => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setActiveDropdown(id);
+  };
+
+  const handleDropdownLeave = (id: string) => {
+    // Set timeout to close dropdown with a slight delay
+    // This gives users time to move their mouse to the dropdown
+    timeoutRef.current = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 300); // 300ms delay before closing
+  };
+
+  // Handle clicking outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activeDropdown !== null) {
+        const dropdownRef = dropdownRefs.current[activeDropdown];
+        if (dropdownRef && !dropdownRef.contains(event.target as Node)) {
+          setActiveDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeDropdown]);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+    setActiveDropdown(null);
+  };
+
+  const toggleDropdown = (id: string) => {
+    setActiveDropdown(activeDropdown === id ? null : id);
+  };
+
   return (
-    <>
-      {/* Hero Section */}
-      <div className="relative h-screen">
-        <div className="absolute inset-0">
-          <img
-            className="w-full h-full object-cover"
-            src="/api/placeholder/1920/1080"
-            alt="Laboratory Background"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-purple-900/90" />
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          <div className="flex flex-col justify-center h-full pt-16">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-              <span className="block">Nanoelectronic And</span>
-              <span className="block">Neuromorphic Device Lab.</span>
-            </h1>
-            <p className="text-xl text-gray-200 max-w-2xl">
-              We conduct cutting-edge research on advanced semiconductor technology,
-              neuromorphic computing, and future logic devices. Our work bridges the gap
-              between academic innovation and industrial applications.
-            </p>
+    <nav className={`fixed w-full z-50 bg-black/80 backdrop-blur-sm transition-transform duration-300 ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-20">
+          <div className="flex items-center">
+            <Link to="/" onClick={closeMenu}>
+              <div className="flex items-center">
+                <Cpu className="h-8 w-8 text-white" />
+                <span className="ml-2 text-xl font-semibold text-white">SMILE Lab</span>
+              </div>
+            </Link>
+          </div>
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center">
+            {navItems.map((item) => (
+              <div 
+                key={item.id} 
+                className="relative"
+                ref={el => dropdownRefs.current[item.id] = el}
+                onMouseEnter={() => handleDropdownEnter(item.id)}
+                onMouseLeave={() => handleDropdownLeave(item.id)}
+              >
+                <Link 
+                  to={item.path}
+                  className="text-white hover:text-gray-200 px-3 py-2 mx-1 rounded-md text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                  onClick={() => setActiveDropdown(null)}
+                >
+                  {item.icon}
+                  {item.text}
+                  <ChevronDown className={`h-4 w-4 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
+                </Link>
+                
+                {/* Desktop Dropdown with improved visibility and hover behavior */}
+                <div 
+                  className={`absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 transition-all duration-150 ${
+                    activeDropdown === item.id ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2 pointer-events-none'
+                  }`}
+                  onMouseEnter={() => {
+                    // Clear timeout when mouse enters dropdown
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                      timeoutRef.current = null;
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    // Close dropdown after a slight delay when mouse leaves
+                    timeoutRef.current = setTimeout(() => {
+                      setActiveDropdown(null);
+                    }, 300);
+                  }}
+                >
+                  <div className="py-1">
+                    <Link 
+                      to={item.path} 
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setActiveDropdown(null)}
+                    >
+                      All {item.text}
+                    </Link>
+                    {item.dropdown.map((dropdownItem, index) => (
+                      <Link 
+                        key={index} 
+                        to={dropdownItem.path} 
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setActiveDropdown(null)}
+                      >
+                        {dropdownItem.text}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-white hover:text-gray-200"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Research Topics */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Research Topics</h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <ResearchCard
-              icon={<Brain className="h-6 w-6" />}
-              title="Neuromorphic Computing"
-              description="Development of brain-inspired computing architectures and devices for efficient AI processing."
-              link="/research/neuromorphic-computing"
-            />
-            <ResearchCard
-              icon={<Cpu className="h-6 w-6" />}
-              title="Future Logic Devices"
-              description="Innovation in next-generation semiconductor devices and novel computing paradigms."
-              link="/research/future-logic-devices"
-            />
-            <ResearchCard
-              icon={<Database className="h-6 w-6" />}
-              title="Memory Technologies"
-              description="Advanced research in non-volatile memory systems and emerging storage solutions."
-              link="/research/memory-technologies"
-            />
-            <ResearchCard
-              icon={<Microscope className="h-6 w-6" />}
-              title="Nano-electronics"
-              description="Exploration of quantum effects and nanoscale phenomena in electronic devices."
-              link="/research/nano-electronics"
-            />
-            <ResearchCard
-              icon={<Globe2 className="h-6 w-6" />}
-              title="Industry Collaboration"
-              description="Partnerships with leading semiconductor companies for real-world applications."
-              link="/contact/collaboration"
-            />
+      {/* Mobile Navigation */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-black/80 backdrop-blur-sm">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            {navItems.map((item) => (
+              <div key={item.id} className="block">
+                <div
+                  className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-base font-medium flex items-center justify-between cursor-pointer"
+                  onClick={() => toggleDropdown(item.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    {item.icon}
+                    {item.text}
+                  </div>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />
+                </div>
+                
+                {/* Mobile Dropdown - Improved with smooth transitions */}
+                <div 
+                  className={`pl-6 mt-1 space-y-1 transition-all duration-300 overflow-hidden ${
+                    activeDropdown === item.id 
+                      ? 'max-h-96 opacity-100' 
+                      : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <Link 
+                    to={item.path} 
+                    className="block px-3 py-2 rounded-md text-sm text-gray-300 hover:text-white"
+                    onClick={closeMenu}
+                  >
+                    All {item.text}
+                  </Link>
+                  {item.dropdown.map((dropdownItem, index) => (
+                    <Link 
+                      key={index} 
+                      to={dropdownItem.path} 
+                      className="block px-3 py-2 rounded-md text-sm text-gray-300 hover:text-white"
+                      onClick={closeMenu}
+                    >
+                      {dropdownItem.text}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </section>
-
-      {/* Latest News Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Latest News</h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <NewsCard
-              date="February 15, 2025"
-              title="New Paper Published in Nature Electronics"
-              description="Our research on high-efficiency neuromorphic devices has been published in Nature Electronics."
-            />
-            <NewsCard
-              date="January 30, 2025"
-              title="Research Grant Awarded"
-              description="The lab has received a $2.5M grant to advance research in quantum computing applications."
-            />
-            <NewsCard
-              date="January 10, 2025"
-              title="Collaboration with Industry Partner"
-              description="New partnership announced with leading semiconductor manufacturer to develop next-gen memory solutions."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Upcoming Events */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Upcoming Events</h2>
-          
-          <div className="max-w-4xl mx-auto space-y-8">
-            <EventCard
-              date="March 10, 2025"
-              title="Neuromorphic Computing Symposium"
-              location="University Conference Center"
-              time="9:00 AM - 5:00 PM"
-            />
-            <EventCard
-              date="April 15-17, 2025"
-              title="Advanced Device Fabrication Workshop"
-              location="SMILE Lab Cleanroom Facility"
-              time="10:00 AM - 4:00 PM"
-            />
-            <EventCard
-              date="May 5, 2025"
-              title="Guest Lecture: Quantum Computing Applications"
-              location="Engineering Building, Room 305"
-              time="3:00 PM - 5:00 PM"
-            />
-          </div>
-        </div>
-      </section>
-    </>
+      )}
+    </nav>
   );
 };
 
-// import { ChevronRight } from "lucide-react"; // Ensure this import is correct
-
-// Define props for ResearchCard
-interface ResearchCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  link: string;
-}
-
-function ResearchCard({ icon, title, description, link }: ResearchCardProps) {
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-      <div className="text-blue-600 mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600 mb-4">{description}</p>
-      <a href={link} className="inline-flex items-center text-blue-600 hover:text-blue-700">
-        Learn more <ChevronRight className="ml-1 h-4 w-4" />
-      </a>
-    </div>
-  );
-}
-
-// Define props for NewsCard
-interface NewsCardProps {
-  date: string;
-  title: string;
-  description: string;
-}
-
-function NewsCard({ date, title, description }: NewsCardProps) {
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-100">
-      <div className="text-sm text-gray-500 mb-2">{date}</div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </div>
-  );
-}
-
-// Define props for EventCard
-interface EventCardProps {
-  date: string;
-  title: string;
-  location: string;
-  time: string;
-}
-
-function EventCard({ date, title, location, time }: EventCardProps) {
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col md:flex-row">
-      <div className="md:w-1/4 mb-4 md:mb-0">
-        <div className="text-lg font-bold text-blue-600">{date}</div>
-        <div className="text-sm text-gray-500">{time}</div>
-      </div>
-      <div className="md:w-3/4">
-        <h3 className="text-xl font-semibold mb-1">{title}</h3>
-        <div className="text-gray-600">{location}</div>
-      </div>
-    </div>
-  );
-}
-
-
-export default HomePage;
+export default Navbar;
