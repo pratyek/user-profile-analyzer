@@ -163,7 +163,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className={`fixed w-full z-50 bg-black/80 backdrop-blur-sm transition-transform duration-300 ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+    <nav className={`fixed w-full z-50 bg-transparant/80 backdrop-blur-sm transition-transform duration-300 ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
           <div className="flex items-center">
