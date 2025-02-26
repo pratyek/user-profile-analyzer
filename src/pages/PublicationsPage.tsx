@@ -2,20 +2,67 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { BookOpen, FileText, Award, Book } from 'lucide-react';
 
+// Define proper interfaces for each publication type
+interface BasePublication {
+  id: number;
+  title: string;
+  year: number;
+  keywords?: string[];
+}
+
+interface JournalPaper extends BasePublication {
+  authors: string;
+  journal: string;
+  doi: string;
+}
+
+interface ConferencePaper extends BasePublication {
+  authors: string;
+  conference: string;
+  location: string;
+}
+
+interface Patent extends BasePublication {
+  inventors: string;
+  patentNumber: string;
+  status: string;
+}
+
+interface BookPublication extends BasePublication {
+  authors: string;
+  publisher: string;
+  isbn: string;
+  bookTitle?: string;
+  editor?: string;
+}
+
+// Define a union type for all publication types
+type Publication = JournalPaper | ConferencePaper | Patent | BookPublication;
+
+// Define the publications data structure
+interface PublicationsData {
+  'journal-papers': JournalPaper[];
+  'conference-papers': ConferencePaper[];
+  'patents': Patent[];
+  'books': BookPublication[];
+}
+
+type PublicationType = keyof PublicationsData;
+
 const PublicationsPage = () => {
-  const { subpage } = useParams();
-  const [activeTab, setActiveTab] = useState(subpage || 'journal-papers');
+  const { subpage } = useParams<{ subpage?: string }>();
+  const [activeTab, setActiveTab] = useState<PublicationType>((subpage as PublicationType) || 'journal-papers');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterYear, setFilterYear] = useState('');
 
   useEffect(() => {
-    if (subpage) {
-      setActiveTab(subpage);
+    if (subpage && ['journal-papers', 'conference-papers', 'patents', 'books'].includes(subpage)) {
+      setActiveTab(subpage as PublicationType);
     }
   }, [subpage]);
 
   // Sample data
-  const publications = {
+  const publications: PublicationsData = {
     'journal-papers': [
       { id: 1, title: 'High-Performance Neuromorphic Computing with Memristive Crossbar Arrays', authors: 'J. Smith, M. Johnson, S. Williams', journal: 'Nature Electronics', year: 2024, doi: '10.1038/s41928-024-0001-1', keywords: ['neuromorphic', 'memristor', 'computing'] },
       { id: 2, title: 'Quantum Effects in 2D Materials for Logic Applications', authors: 'R. Chen, E. Davis, J. Smith', journal: 'IEEE Transactions on Electron Devices', year: 2023, doi: '10.1109/TED.2023.1234567', keywords: ['quantum', '2D materials', 'logic'] },
@@ -51,36 +98,45 @@ const PublicationsPage = () => {
   ];
 
   // Get all years for filtering
+// Get all years for filtering
   const getYears = () => {
-    const years = new Set<number>(); // Explicitly set type as number
-    Object.values(publications).forEach(category => {
-      category.forEach(pub => years.add(pub.year));
+    const years = new Set<number>();
+    Object.values(publications).forEach((category: Publication[]) => {
+      category.forEach((pub: Publication) => years.add(pub.year));
     });
     return Array.from(years).sort((a, b) => b - a); // Sort descending
   };
-  
+
 
   // Filter publications based on search term and year
   const getFilteredPublications = () => {
-    if (!publications || !publications[activeTab as keyof typeof publications]) return [];
-  
-    return publications[activeTab as keyof typeof publications]!.filter(pub => {
-      const matchesSearch =
-        !searchTerm ||
-        pub.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ("authors" in pub && pub.authors?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        ("inventors" in pub && pub.inventors?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        pub.keywords?.some(kw => kw.toLowerCase().includes(searchTerm.toLowerCase()));
-  
-      const matchesYear = !filterYear || pub.year?.toString() === filterYear;
-  
+    if (!publications[activeTab]) return [];
+
+    return publications[activeTab].filter((pub) => {
+      const matchesSearch = !searchTerm || 
+        pub.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        // Check authors or inventors based on publication type
+        (isJournalPaper(pub) || isConferencePaper(pub) || isBook(pub) ? 
+          pub.authors.toLowerCase().includes(searchTerm.toLowerCase()) : 
+          isPatent(pub) ? 
+            pub.inventors.toLowerCase().includes(searchTerm.toLowerCase()) : 
+            false) ||
+        // Check keywords
+        (pub.keywords?.some(kw => kw.toLowerCase().includes(searchTerm.toLowerCase())) ?? false);
+
+      const matchesYear = !filterYear || pub.year.toString() === filterYear;
+
       return matchesSearch && matchesYear;
     });
   };
-  
-  
-  
+
   const filteredPublications = getFilteredPublications();
+
+  // Type guard functions
+  const isJournalPaper = (pub: Publication): pub is JournalPaper => 'journal' in pub;
+  const isConferencePaper = (pub: Publication): pub is ConferencePaper => 'conference' in pub;
+  const isPatent = (pub: Publication): pub is Patent => 'patentNumber' in pub;
+  const isBook = (pub: Publication): pub is BookPublication => 'isbn' in pub;
 
   return (
     <div className="pt-20 bg-gray-50 min-h-screen">
@@ -128,25 +184,28 @@ const PublicationsPage = () => {
         
         {/* Publication List */}
         <div className="space-y-6">
-          {filteredPublications?.length > 0 ? (
+          {filteredPublications.length > 0 ? (
             filteredPublications.map(pub => (
               <div key={pub.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                 <h3 className="text-xl font-semibold mb-2">{pub.title}</h3>
-                {activeTab === 'journal-papers' && (
+                
+                {isJournalPaper(pub) && (
                   <>
                     <p className="text-gray-700 mb-1"><strong>Authors:</strong> {pub.authors}</p>
                     <p className="text-gray-700 mb-1"><strong>Journal:</strong> {pub.journal}, {pub.year}</p>
                     <p className="text-gray-700 mb-1"><strong>DOI:</strong> {pub.doi}</p>
                   </>
                 )}
-                {activeTab === 'conference-papers' && (
+                
+                {isConferencePaper(pub) && (
                   <>
                     <p className="text-gray-700 mb-1"><strong>Authors:</strong> {pub.authors}</p>
                     <p className="text-gray-700 mb-1"><strong>Conference:</strong> {pub.conference}, {pub.year}</p>
                     <p className="text-gray-700 mb-1"><strong>Location:</strong> {pub.location}</p>
                   </>
                 )}
-                {activeTab === 'patents' && (
+                
+                {isPatent(pub) && (
                   <>
                     <p className="text-gray-700 mb-1"><strong>Inventors:</strong> {pub.inventors}</p>
                     <p className="text-gray-700 mb-1"><strong>Patent Number:</strong> {pub.patentNumber}</p>
@@ -154,7 +213,8 @@ const PublicationsPage = () => {
                     <p className="text-gray-700 mb-1"><strong>Status:</strong> {pub.status}</p>
                   </>
                 )}
-                {activeTab === 'books' && (
+                
+                {isBook(pub) && (
                   <>
                     <p className="text-gray-700 mb-1"><strong>Authors:</strong> {pub.authors}</p>
                     {pub.bookTitle && <p className="text-gray-700 mb-1"><strong>In:</strong> {pub.bookTitle}</p>}
@@ -162,6 +222,7 @@ const PublicationsPage = () => {
                     <p className="text-gray-700 mb-1"><strong>ISBN:</strong> {pub.isbn}</p>
                   </>
                 )}
+                
                 <div className="mt-2 flex flex-wrap gap-2">
                   {pub.keywords?.map((keyword, idx) => (
                     <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
