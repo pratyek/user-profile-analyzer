@@ -71,7 +71,7 @@ const MembersPage = () => {
             <Link 
               key={tab.id}
               to={`/members/${tab.id}`}
-              className={`px-4 py-2 font-medium text-sm md:text-base mb-1 ${activeTab === tab.id ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+              className={`px-4 py-2 font-medium text-sm md:text-base mb-1 ${activeTab === tab.id ? 'border-b-2 border-blue-900 text-blue-900' : 'text-gray-600 hover:text-gray-900'}`}
             >
               {tab.label}
             </Link>
@@ -86,7 +86,7 @@ const MembersPage = () => {
                 <img src={member.image} alt={member.name} className="w-full h-64 object-cover" />
                 <div className="p-6">
                   <h3 className="text-xl font-semibold">{member.name}</h3>
-                  <p className="text-blue-600 mb-4">{member.title}</p>
+                  <p className="text-blue-900 mb-4">{member.title}</p>
                   <p className="text-gray-600 mb-4">{member.bio}</p>
                   <div>
                     <span className="font-semibold">Research Focus:</span>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { BookOpen, FileText, Award, Book } from 'lucide-react';
 
 // Define proper interfaces for each publication type
@@ -54,6 +54,7 @@ const PublicationsPage = () => {
   const [activeTab, setActiveTab] = useState<PublicationType>((subpage as PublicationType) || 'journal-papers');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterYear, setFilterYear] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (subpage && ['journal-papers', 'conference-papers', 'patents', 'books'].includes(subpage)) {
@@ -98,7 +99,6 @@ const PublicationsPage = () => {
   ];
 
   // Get all years for filtering
-// Get all years for filtering
   const getYears = () => {
     const years = new Set<number>();
     Object.values(publications).forEach((category: Publication[]) => {
@@ -107,6 +107,10 @@ const PublicationsPage = () => {
     return Array.from(years).sort((a, b) => b - a); // Sort descending
   };
 
+  // Navigate to publication detail page
+  const handlePublicationClick = (pubType: PublicationType, pubId: number) => {
+    navigate(`/publications/${pubType}/view/${pubId}`);
+  };
 
   // Filter publications based on search term and year
   const getFilteredPublications = () => {
@@ -186,8 +190,12 @@ const PublicationsPage = () => {
         <div className="space-y-6">
           {filteredPublications.length > 0 ? (
             filteredPublications.map(pub => (
-              <div key={pub.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-2">{pub.title}</h3>
+              <div 
+                key={pub.id} 
+                className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => handlePublicationClick(activeTab, pub.id)}
+              >
+                <h3 className="text-xl font-semibold mb-2 text-blue-600 hover:underline">{pub.title}</h3>
                 
                 {isJournalPaper(pub) && (
                   <>

@@ -128,7 +128,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section / Banner */}
-      <div className="relative h-screen bg-gradient-to-r from-blue-800 to-indigo-900 text-white">
+      <div className="relative h-screen bg-gradient-to-r from-blue-900 to-blue-900 text-white">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-blue-900 opacity-50"></div>
           {/* Background pattern/image would go here */}
@@ -144,7 +144,8 @@ const HomePage: React.FC = () => {
             <div className="flex flex-wrap justify-center gap-4 mt-10">
               <Link
                 to="/research"
-                className="px-6 py-3 text-lg font-medium text-blue-900 bg-white rounded-md hover:bg-blue-50 transition-colors duration-300"
+                className="px-6 py-3 text-lg font-medium text-blue-900 bg-white rounded-md transition-colors duration-300 hover:bg-blue-700 hover:text-white
+"
               >
                 Explore Research
               </Link>
@@ -209,7 +210,7 @@ const HomePage: React.FC = () => {
           </p>
           <Link
             to="/contact/collaboration"
-            className="inline-block px-8 py-3 text-lg font-medium bg-white text-blue-900 rounded-md hover:bg-blue-100 transition-colors duration-300"
+            className="inline-block px-8 py-3 text-lg font-medium bg-white text-blue-900 rounded-md hover:bg-blue-700 hover:text-white transition-colors duration-300"
           >
             Contact Us
           </Link>
