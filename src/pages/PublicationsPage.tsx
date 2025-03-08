@@ -54,6 +54,7 @@ const PublicationsPage = () => {
   const [activeTab, setActiveTab] = useState<PublicationType>((subpage as PublicationType) || 'journal-papers');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterYear, setFilterYear] = useState('');
+  const [visitedLinks, setVisitedLinks] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,6 +62,14 @@ const PublicationsPage = () => {
       setActiveTab(subpage as PublicationType);
     }
   }, [subpage]);
+
+  // Load visited links from sessionStorage on component mount
+  useEffect(() => {
+    const storedVisitedLinks = sessionStorage.getItem('visitedPublications');
+    if (storedVisitedLinks) {
+      setVisitedLinks(new Set(JSON.parse(storedVisitedLinks)));
+    }
+  }, []);
 
   // Sample data
   const publications: PublicationsData = {
@@ -107,9 +116,26 @@ const PublicationsPage = () => {
     return Array.from(years).sort((a, b) => b - a); // Sort descending
   };
 
-  // Navigate to publication detail page
+  // Navigate to publication detail page and mark as visited
   const handlePublicationClick = (pubType: PublicationType, pubId: number) => {
+    // Create a unique identifier for this publication
+    const pubLinkId = `${pubType}-${pubId}`;
+    
+    // Add to visited links
+    const updatedVisitedLinks = new Set(visitedLinks);
+    updatedVisitedLinks.add(pubLinkId);
+    setVisitedLinks(updatedVisitedLinks);
+    
+    // Save to sessionStorage
+    sessionStorage.setItem('visitedPublications', JSON.stringify([...updatedVisitedLinks]));
+    
+    // Navigate to the publication detail page
     navigate(`/publications/${pubType}/view/${pubId}`);
+  };
+
+  // Check if a publication has been visited
+  const isVisited = (pubType: PublicationType, pubId: number) => {
+    return visitedLinks.has(`${pubType}-${pubId}`);
   };
 
   // Filter publications based on search term and year
@@ -195,7 +221,11 @@ const PublicationsPage = () => {
                 className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => handlePublicationClick(activeTab, pub.id)}
               >
-                <h3 className="text-xl font-semibold mb-2 text-blue-600 hover:underline">{pub.title}</h3>
+                <h3 className={`text-xl font-semibold mb-2 hover:underline ${
+                  isVisited(activeTab, pub.id) ? 'text-purple-600' : 'text-blue-600'
+                }`}>
+                  {pub.title}
+                </h3>
                 
                 {isJournalPaper(pub) && (
                   <>
